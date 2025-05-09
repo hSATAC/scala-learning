@@ -4,6 +4,82 @@ case class PriceData(date: String, open: Double, high: Double, low: Double, clos
 
 // 分析功能
 object StockAnalyzer:
+  // 1. 定義資料存取介面
+  trait StockDataProvider:
+    def getStockHistory(symbol: String): List[PriceData]
+    def getCurrentPrice(symbol: String): Option[Double]
+    def getStocks(): List[Stock]
+
+  // 2. 實作測試用的資料提供者
+  given testDataProvider: StockDataProvider with
+    def getStockHistory(symbol: String): List[PriceData] =
+      List(
+        PriceData("2023-01-01", 100.0, 105.0, 98.0, 103.0, 1000000),
+        PriceData("2023-01-02", 103.0, 107.0, 102.0, 106.0, 1100000),
+        PriceData("2023-01-03", 106.0, 108.0, 104.0, 105.0, 900000),
+        PriceData("2023-01-04", 105.0, 106.0, 101.0, 102.0, 1200000),
+        PriceData("2023-01-05", 102.0, 104.0, 100.0, 101.0, 800000),
+        PriceData("2023-01-06", 101.0, 103.0, 99.0, 102.0, 900000),
+        PriceData("2023-01-07", 102.0, 105.0, 101.0, 104.0, 1000000),
+        PriceData("2023-01-08", 104.0, 108.0, 103.0, 107.0, 1300000),
+        PriceData("2023-01-09", 107.0, 110.0, 106.0, 109.0, 1400000),
+        PriceData("2023-01-10", 109.0, 112.0, 108.0, 110.0, 1200000),
+        PriceData("2023-01-11", 110.0, 113.0, 109.0, 112.0, 1100000),
+        PriceData("2023-01-12", 112.0, 115.0, 111.0, 114.0, 1300000),
+        PriceData("2023-01-13", 114.0, 116.0, 112.0, 113.0, 1000000),
+        PriceData("2023-01-14", 113.0, 114.0, 110.0, 111.0, 900000),
+        PriceData("2023-01-15", 111.0, 112.0, 109.0, 110.0, 800000),
+        PriceData("2023-01-16", 110.0, 111.0, 108.0, 109.0, 700000),
+        PriceData("2023-01-17", 109.0, 112.0, 108.0, 111.0, 900000),
+        PriceData("2023-01-18", 111.0, 114.0, 110.0, 113.0, 1100000),
+        PriceData("2023-01-19", 113.0, 116.0, 112.0, 115.0, 1300000),
+        PriceData("2023-01-20", 115.0, 118.0, 114.0, 117.0, 1400000),
+        PriceData("2023-01-21", 117.0, 120.0, 116.0, 119.0, 1500000),
+        PriceData("2023-01-22", 119.0, 122.0, 118.0, 121.0, 1600000),
+        PriceData("2023-01-23", 121.0, 123.0, 119.0, 120.0, 1400000),
+        PriceData("2023-01-24", 120.0, 121.0, 117.0, 118.0, 1200000),
+        PriceData("2023-01-25", 118.0, 119.0, 115.0, 116.0, 1100000),
+        PriceData("2023-01-26", 116.0, 118.0, 114.0, 117.0, 1300000),
+        PriceData("2023-01-27", 117.0, 120.0, 116.0, 119.0, 1400000),
+        PriceData("2023-01-28", 119.0, 122.0, 118.0, 121.0, 1500000),
+        PriceData("2023-01-29", 121.0, 124.0, 120.0, 123.0, 1600000),
+        PriceData("2023-01-30", 123.0, 126.0, 122.0, 125.0, 1700000),
+        PriceData("2023-01-31", 125.0, 128.0, 124.0, 127.0, 1800000),
+        PriceData("2023-02-01", 127.0, 130.0, 126.0, 129.0, 1900000),
+        PriceData("2023-02-02", 129.0, 132.0, 128.0, 131.0, 2000000),
+        PriceData("2023-02-03", 131.0, 133.0, 129.0, 130.0, 1800000),
+        PriceData("2023-02-04", 130.0, 131.0, 127.0, 128.0, 1600000),
+        PriceData("2023-02-05", 128.0, 129.0, 125.0, 126.0, 1400000),
+        PriceData("2023-02-06", 126.0, 128.0, 124.0, 127.0, 1500000),
+        PriceData("2023-02-07", 127.0, 130.0, 126.0, 129.0, 1700000),
+        PriceData("2023-02-08", 129.0, 132.0, 128.0, 131.0, 1900000),
+        PriceData("2023-02-09", 131.0, 134.0, 130.0, 133.0, 2100000)
+      )
+    def getCurrentPrice(symbol: String): Option[Double] =
+      getStocks().find(_.symbol == symbol).map(_.price)
+    def getStocks(): List[Stock] =
+      List(
+        Stock("2330", "台積電", 825.0, 15.0, 1000000000),
+        Stock("2454", "聯發科", 1150.0, -5.0, 1000000000),
+        Stock("2317", "鴻海", 142.5, 1.5, 1000000000),
+        Stock("1301", "台塑", 78.2, -0.8, 1000000000),
+        Stock("2412", "中華電", 126.5, 0.5, 1000000000)
+      )
+
+  // 3. 實作使用資料提供者的服務
+  class StockAnalysisService(using provider: StockDataProvider):
+    def getStockVolatility(symbol: String): Option[Double] =
+      val history = provider.getStockHistory(symbol)
+      if history.isEmpty then return None
+      
+      val priceChanges = history.sliding(2).map { case List(prev, curr) => curr.close - prev.close }
+      val volatility = priceChanges.map(math.abs).sum / priceChanges.length
+      Some(volatility)
+    def getHighestValueStock(): Option[Stock] =
+      provider.getStocks().maxByOption(_.price)
+    def getStocksWithPriceAbove(price: Double): List[Stock] =
+      provider.getStocks().filter(_.price > price)
+
   // 1. 計算股票的市值（股價 * 流通股數）
   // def marketCap(stock: Stock): Double =
   //   stock.price * stock.outstandingShares
