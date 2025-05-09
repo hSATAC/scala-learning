@@ -17,6 +17,22 @@ object StockAnalyzer:
   def calculatePE(stock: Stock, eps: Double): Option[Double] =
     Option(eps).filter(_ != 0).map(e => stock.price / e)
 
+  // 1. 安全地計算兩支股票的價格比率，處理可能的零價格
+  def priceRatio(stock1: Stock, stock2: Stock): Option[Double] =
+    Option.when(stock1.price != 0 && stock2.price != 0)(stock1.price / stock2.price)
+
+  // 2. 找出特定日期範圍內的最高和最低價格，若範圍內沒有資料則返回 None
+  def findPriceRange(history: List[PriceData], startDate: String, endDate: String): Option[(Double, Double)] =
+    val inRange = history.filter(data => data.date >= startDate && data.date <= endDate)
+    for {
+      highest <- inRange.map(_.high).maxOption
+      lowest <- inRange.map(_.low).minOption
+    } yield (highest, lowest)
+
+  // 3. 嘗試找出某個股票代號的資訊，若不存在則返回 None
+  def findStock(stocks: List[Stock], symbol: String): Option[Stock] =
+    stocks.find(_.symbol == symbol)
+
   // 過濾上漲的股票
   def gainers(stocks: List[Stock]): List[Stock] = 
     stocks.filter(stock => stock.change > 0)
