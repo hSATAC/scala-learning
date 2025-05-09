@@ -5,6 +5,55 @@ case class PriceData(date: String, open: Double, high: Double, low: Double, clos
 // 分析功能
 object StockAnalyzer:
 
+  // 1. 定義投資組合類別
+  case class Portfolio(name: String, assets: Map[Asset, Int], cash: Double):
+    // 2. 添加資產到投資組合（返回新的投資組合）
+    def addAsset(asset: Asset, quantity: Int): Portfolio =
+      this.copy(assets = assets.updated(asset, assets.getOrElse(asset, 0) + quantity))
+    
+    // 3. 從投資組合移除資產（返回新的投資組合）
+    def removeAsset(asset: Asset, quantity: Int): Portfolio =
+      val newQuantity = assets.getOrElse(asset, 0) - quantity
+      this.copy(assets = 
+        if newQuantity <= 0 then assets - asset
+        else assets.updated(asset, newQuantity)
+      )
+    
+    // 4. 計算投資組合的總價值
+    def totalValue: Double =
+      assets.map { case (asset, quantity) =>
+        assetValue(asset) * quantity
+      }.sum
+    
+    // 5. 計算投資組合的資產分配比例
+    def allocation: Map[String, Double] =
+      val assetTotal = assets.foldLeft(0.0) { case (sum, (asset, quantity)) =>
+        sum + assetValue(asset) * quantity
+      }
+      val total = assetTotal + cash
+      
+      if total <= 0 then Map()
+      else
+        // 按資產類型分組計算資產分配
+        val assetAllocation = assets.groupBy { case (asset, _) => 
+          asset match
+            case Asset.StockAsset(_) => "Stock"
+            case Asset.BondAsset(_, _, _) => "Bond"
+            case Asset.CashAsset(_, _) => "Cash"
+        }
+        .map { case (typeName, assetsOfType) =>
+          val typeValue = assetsOfType.foldLeft(0.0) { case (sum, (asset, quantity)) =>
+            sum + assetValue(asset) * quantity
+          }
+          (typeName, typeValue / total)
+        }
+        
+        // 加上現金分配
+        if cash > 0 then
+          assetAllocation + ("Cash" -> (cash / total))
+        else
+          assetAllocation
+
   // 定義可能的錯誤類型
   enum StockError:
     case SymbolNotFound(symbol: String)
