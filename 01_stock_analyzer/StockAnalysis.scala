@@ -4,6 +4,33 @@ case class PriceData(date: String, open: Double, high: Double, low: Double, clos
 
 // 分析功能
 object StockAnalyzer:
+
+  // 定義可能的錯誤類型
+  enum StockError:
+    case SymbolNotFound(symbol: String)
+    case InvalidData(message: String)
+    case CalculationError(message: String)
+
+  // 1. 安全地尋找股票
+  def findStockSafe(stocks: List[Stock], symbol: String): Either[StockError, Stock] =
+    stocks.find(_.symbol == symbol) match
+      case Some(stock) => Right(stock)
+      case None => Left(StockError.SymbolNotFound(symbol))
+
+  // 2. 安全地計算市值
+  def calculateMarketCapSafe(stock: Stock): Either[StockError, Double] =
+    if stock.outstandingShares <= 0 then
+      Left(StockError.InvalidData("Outstanding shares must be positive"))
+    else
+      Right(stock.price * stock.outstandingShares)
+
+  // 3. 使用 for-comprehension 組合多個操作
+  def getMarketCapForSymbol(stocks: List[Stock], symbol: String): Either[StockError, Double] =
+    for
+      stock <- findStockSafe(stocks, symbol)
+      marketCap <- calculateMarketCapSafe(stock)
+    yield marketCap
+
   // 1. 定義資料存取介面
   trait StockDataProvider:
     def getStockHistory(symbol: String): List[PriceData]
