@@ -33,6 +33,26 @@ object StockAnalyzer:
   def findStock(stocks: List[Stock], symbol: String): Option[Stock] =
     stocks.find(_.symbol == symbol)
 
+  // 1. 定義過濾器和轉換器類型
+  type StockFilter = Stock => Boolean
+  type StockTransformer = Stock => Double
+
+  // 2. 組合兩個過濾器（兩個條件都必須滿足）
+  def andFilter(filter1: StockFilter, filter2: StockFilter): StockFilter =
+    stock => filter1(stock) && filter2(stock)
+
+  // 3. 組合兩個過濾器（至少一個條件滿足）
+  def orFilter(filter1: StockFilter, filter2: StockFilter): StockFilter =
+    stock => filter1(stock) || filter2(stock)
+
+  // 4. 組合兩個轉換器（先用第一個，再將結果傳給第二個）
+  def composeTransformers(t1: StockTransformer, t2: Double => Double): StockTransformer =
+    stock => t2(t1(stock))
+
+  // 5. 使用過濾器和轉換器的函數
+  def filterAndTransform(stocks: List[Stock], filter: StockFilter, transformer: StockTransformer): List[Double] =
+    stocks.filter(filter).map(transformer)
+
   // 過濾上漲的股票
   def gainers(stocks: List[Stock]): List[Stock] = 
     stocks.filter(stock => stock.change > 0)
@@ -98,8 +118,20 @@ object StockAnalyzer:
     PriceData("2025-05-05", 790.0, 802.0, 790.0, 800.0, 18000000),
     PriceData("2025-05-04", 785.0, 795.0, 785.0, 790.0, 15000000)
   )
-  println(highestMarketCap(stocks))
-  println(calculatePE(stocks.head, 10.0))
+
+  // 定義基本過濾器
+  val highPriceFilter: StockFilter = stock => stock.price > 500
+  val positiveChangeFilter: StockFilter = stock => stock.change > 0
+
+  // 組合過濾器
+  val highPriceAndPositiveChangeFilter = andFilter(highPriceFilter, positiveChangeFilter)
+
+  // 使用組合後的過濾器
+  val expensiveGainers = stocks.filter(highPriceAndPositiveChangeFilter)
+  println(expensiveGainers)
+
+  // println(highestMarketCap(stocks))
+  // println(calculatePE(stocks.head, 10.0))
 //   println("上漲的股票:")
 //   gainers(stocks).foreach(s => println(s"${s.name}: ${s.change}"))
   
