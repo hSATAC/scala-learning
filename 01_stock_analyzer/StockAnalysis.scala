@@ -53,6 +53,32 @@ object StockAnalyzer:
   def filterAndTransform(stocks: List[Stock], filter: StockFilter, transformer: StockTransformer): List[Double] =
     stocks.filter(filter).map(transformer)
 
+  // 1. 定義不同類型的金融資產 
+  enum Asset:
+    case StockAsset(stock: Stock)
+    case BondAsset(name: String, faceValue: Double, couponRate: Double)
+    case CashAsset(amount: Double, currency: String)
+
+  // 2. 計算任何資產的價值
+  def assetValue(asset: Asset): Double =
+    asset match
+      case Asset.StockAsset(stock) => stock.price * stock.outstandingShares
+      case Asset.BondAsset(_, faceValue, _) => faceValue
+      case Asset.CashAsset(amount, _) => amount
+
+  // 3. 計算投資組合的總價值
+  def portfolioValue(assets: List[Asset]): Double =
+    assets.map(assetValue).sum
+
+  // 4. 根據資產類型進行分類
+  def categorizeAssets(assets: List[Asset]): Map[String, List[Asset]] =
+    assets.groupBy(asset => asset match
+      case Asset.StockAsset(stock) => "Stock"
+      case Asset.BondAsset(name, _, _) => "Bond"
+      case Asset.CashAsset(amount, currency) => "Cash"
+    )
+      
+
   // 過濾上漲的股票
   def gainers(stocks: List[Stock]): List[Stock] = 
     stocks.filter(stock => stock.change > 0)
