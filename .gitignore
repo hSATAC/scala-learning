@@ -63,3 +63,6 @@ hs_err_pid*
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/scala,macos,visualstudiocode,metals
+
+project
+target
