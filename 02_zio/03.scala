@@ -49,50 +49,50 @@
 //   } yield ()
 // }
 
-import zio._
+// import zio._
 
-object CatchAllExample extends ZIOAppDefault {
+// object CatchAllExample extends ZIOAppDefault {
 
-  // 修正版本
-  def parseInt(s: String): ZIO[Any, String, Int] =
-    ZIO.attempt(s.toInt)
-      .mapError {
-        case e: NumberFormatException => s"'$s' is not a valid integer. (Caught by ZIO.attempt)"
-        case t: Throwable             => s"An unexpected error occurred while parsing '$s': ${t.getMessage}"
-      }
+//   // 修正版本
+//   def parseInt(s: String): ZIO[Any, String, Int] =
+//     ZIO.attempt(s.toInt)
+//       .mapError {
+//         case e: NumberFormatException => s"'$s' is not a valid integer. (Caught by ZIO.attempt)"
+//         case t: Throwable             => s"An unexpected error occurred while parsing '$s': ${t.getMessage}"
+//       }
 
-  val validString = "123"
-  val invalidString = "abc"
-  // val anotherInvalidString = "xyz" // 這行目前沒用到，可以註解掉或保留
+//   val validString = "123"
+//   val invalidString = "abc"
+//   // val anotherInvalidString = "xyz" // 這行目前沒用到，可以註解掉或保留
 
-  def parseWithFallback(s: String): ZIO[Any, Nothing, Int] =
-    parseInt(s).catchAll { error =>
-      Console.printLine(s"Parsing failed for '$s' with error: $error. Using fallback.").orDie *>
-      ZIO.succeed(0)
-    }
+//   def parseWithFallback(s: String): ZIO[Any, Nothing, Int] =
+//     parseInt(s).catchAll { error =>
+//       Console.printLine(s"Parsing failed for '$s' with error: $error. Using fallback.").orDie *>
+//       ZIO.succeed(0)
+//     }
 
-  val effect1: ZIO[Any, String, String] = ZIO.fail("Primary source failed")
-  val effect2: ZIO[Any, String, String] = ZIO.fail("Secondary source also failed")
-  val effect3: ZIO[Any, Nothing, String] = ZIO.succeed("Tertiary source (guaranteed success)")
+//   val effect1: ZIO[Any, String, String] = ZIO.fail("Primary source failed")
+//   val effect2: ZIO[Any, String, String] = ZIO.fail("Secondary source also failed")
+//   val effect3: ZIO[Any, Nothing, String] = ZIO.succeed("Tertiary source (guaranteed success)")
 
-  // tryMultipleSources 的型別是 ZIO[Any, Nothing, String]
-  val tryMultipleSources: ZIO[Any, Nothing, String] =
-    effect1.catchAll { _ =>
-      Console.printLine("Effect 1 failed, trying effect 2").orDie *>
-      effect2.catchAll { _ =>
-        Console.printLine("Effect 2 failed, trying effect 3").orDie *>
-        effect3
-      }
-    }
+//   // tryMultipleSources 的型別是 ZIO[Any, Nothing, String]
+//   val tryMultipleSources: ZIO[Any, Nothing, String] =
+//     effect1.catchAll { _ =>
+//       Console.printLine("Effect 1 failed, trying effect 2").orDie *>
+//       effect2.catchAll { _ =>
+//         Console.printLine("Effect 2 failed, trying effect 3").orDie *>
+//         effect3
+//       }
+//     }
 
-  // 恢復完整的 run 方法，但修正了 tryMultipleSources 的使用
-  def run = for {
-    num1 <- parseWithFallback(validString)
-    _    <- Console.printLine(s"Parsed '$validString': $num1")
-    num2 <- parseWithFallback(invalidString)
-    _    <- Console.printLine(s"Parsed '$invalidString': $num2")
-    _    <- Console.printLine("--- Trying multiple sources ---")
-    finalResult <- tryMultipleSources // <--- 重要修正：直接使用，不加 .catchAll
-    _    <- Console.printLine(s"Result from multiple sources: $finalResult")
-  } yield ()
-}
+//   // 恢復完整的 run 方法，但修正了 tryMultipleSources 的使用
+//   def run = for {
+//     num1 <- parseWithFallback(validString)
+//     _    <- Console.printLine(s"Parsed '$validString': $num1")
+//     num2 <- parseWithFallback(invalidString)
+//     _    <- Console.printLine(s"Parsed '$invalidString': $num2")
+//     _    <- Console.printLine("--- Trying multiple sources ---")
+//     finalResult <- tryMultipleSources // <--- 重要修正：直接使用，不加 .catchAll
+//     _    <- Console.printLine(s"Result from multiple sources: $finalResult")
+//   } yield ()
+// }
